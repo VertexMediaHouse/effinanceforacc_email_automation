@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VMH — Email Automation</title>
+    <title>Effinance — Email Automation</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2133,6 +2133,14 @@
                         </svg>
                         Refresh
                     </button>
+                    <button class="btn btn-violet" id="btn-trigger" onclick="triggerWebhook()"
+                        title="Manually trigger this campaign's n8n webhook">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        Trigger Workflow
+                    </button>
                 </div>
             </div>
 
@@ -2587,6 +2595,8 @@
             document.getElementById('campaigns-list-view').classList.toggle('active', name === 'campaigns-list');
             document.getElementById('main-dash-view').style.display = (name === 'campaign') ? 'flex' : 'none';
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const trigBtn = document.getElementById('btn-trigger');
+            if (trigBtn) trigBtn.style.display = (name === 'campaign') ? 'inline-flex' : 'none';
         }
 
         function showGlobalMaster(btn) {
@@ -2665,6 +2675,17 @@
     <input data-k="gsheetUrl" value="${esc(x.camp.gsheetUrl || '')}" placeholder="https://docs.google.com/spreadsheets/d/…/pub?output=csv&gid=…"/>
   </div>
 
+<div class="field">
+    <label>Trigger Webhook URL 
+      <span style="color:var(--muted);font-weight:400;">
+        n8n webhook automatically mapped to campaign name
+      </span>
+    </label>
+    <div style="background:var(--surface-alt);padding:9px 11px;border-radius:var(--radius-sm);font-size:11.5px;color:var(--text-2);word-break:break-all;">
+      https://effinanceforacc.app.n8n.cloud/webhook-test/${esc(x.camp.name)}
+    </div>
+  </div>
+  
   <div class="field">
     <label>Column mapping <span style="color:var(--muted);font-weight:400;">(leave blank to match the column named after each field)</span></label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
@@ -2701,6 +2722,30 @@
             document.getElementById('cfg-overlay').classList.add('open');
         }
         function closeConfig() { document.getElementById('cfg-overlay').classList.remove('open'); }
+
+        async function triggerWebhook() {
+            const camp = activeCamp();
+            if (!camp) return;
+            const webhookUrl = "https://effinanceforacc.app.n8n.cloud/webhook-test/" + encodeURIComponent(camp.name);
+
+            try {
+                toast('Triggering...', '');
+                const res = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        campaign: camp.name,
+                        workspace: getWs(activeWsId)?.name,
+                        triggered_at: new Date().toISOString(),
+                        triggered_by: 'manual'
+                    })
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                toast('Webhook triggered ✓', 'success');
+            } catch (e) {
+                toast('Webhook failed: ' + e.message, 'error');
+            }
+        }
         function saveConfig() {
             document.querySelectorAll('#svc-panels .svc-panel').forEach(panel => {
                 const camp = getCamp(panel.dataset.ws, panel.dataset.camp); if (!camp) return;
