@@ -2168,7 +2168,7 @@
     <div id="login-overlay" style="display: none; position: fixed; inset: 0; background: var(--bg); z-index: 9999; flex-direction: column; align-items: center; justify-content: center;">
         <div class="modal" style="width: 400px; text-align: center;">
             <div style="margin-bottom: 20px;">
-                <div class="brand-mark" style="margin: 0 auto 15px; width: 48px; height: 48px; font-size: 20px;">V</div>
+                <div style="margin: 0 auto 15px; width: 150px; height: 150px;"><img src="logo.png" style="width: 100%; height: 100%;"></div>
                 <h2>Effinance Dashboard</h2>
                 <p class="modal-sub">Please log in to continue</p>
             </div>
@@ -2192,7 +2192,7 @@
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if (email === 'arpit@effinanceforacc.co' && pass === 'Effinance@123') {
+            if (email === 'arpit@effinanceforacc.co' && pass === 'Effinanceforacc@123') {
                 sessionStorage.setItem('eff_logged_in', 'true');
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('app-container').style.display = 'grid';
@@ -2229,7 +2229,8 @@
     <div class="app" id="app-container">
         <aside class="sidebar" id="sidebar">
             <div class="brand">
-                <div class="brand-mark">E</div>
+                <div style="width: 50px; height: 50px;"><img src="logo.png"
+                        style="width: 100%; height: 100%;"></div>
                 <div class="brand-text"><strong>Effinance</strong><small>Email Automation</small></div>
             </div>
 
@@ -2335,7 +2336,7 @@
                                     <div class="panel-sub">All users · all campaigns</div>
                                 </div>
                                 <div class="chart-tabs" id="vol-tabs-g">
-                                    <button class="chart-tab" data-d="7">7D</button>
+                                    <button class="chart-tab" data-d="5">5D</button>
                                     <button class="chart-tab active" data-d="14">14D</button>
                                     <button class="chart-tab" data-d="30">30D</button>
                                 </div>
@@ -2374,7 +2375,7 @@
                                     <div class="panel-sub">All campaigns combined</div>
                                 </div>
                                 <div class="chart-tabs" id="vol-tabs-u">
-                                    <button class="chart-tab" data-d="7">7D</button>
+                                    <button class="chart-tab" data-d="5">5D</button>
                                     <button class="chart-tab active" data-d="14">14D</button>
                                     <button class="chart-tab" data-d="30">30D</button>
                                 </div>
@@ -2435,7 +2436,7 @@
                                         <line x1="3" y1="10" x2="21" y2="10" />
                                     </svg></span></div>
                             <div class="stat-value" id="stat-week">—</div>
-                            <div class="stat-sub">last 7 days</div>
+                            <div class="stat-sub">last 5 days</div>
                             <canvas class="spark" id="spark-week"></canvas>
                         </div>
                         <div class="stat-card anim anim-d3">
@@ -2503,7 +2504,7 @@
                                     <div class="panel-sub">Emails sent per day</div>
                                 </div>
                                 <div class="chart-tabs" id="vol-tabs"><button class="chart-tab"
-                                        data-d="7">7D</button><button class="chart-tab active"
+                                        data-d="5">5D</button><button class="chart-tab active"
                                         data-d="14">14D</button><button class="chart-tab" data-d="30">30D</button></div>
                             </div>
                             <div class="panel-body"><canvas id="barChart"></canvas></div>
@@ -2523,7 +2524,7 @@
                             <div class="panel-header">
                                 <div>
                                     <div class="panel-title">Send Activity by Hour</div>
-                                    <div class="panel-sub">Last 7 days</div>
+                                    <div class="panel-sub">Last 5 days</div>
                                 </div>
                             </div>
                             <div class="panel-body"><canvas id="heatmapChart"></canvas></div>
@@ -2594,8 +2595,6 @@
                                         <option value="2">Day 3</option>
                                         <option value="3">Day 4</option>
                                         <option value="4">Day 5</option>
-                                        <option value="5">Day 6</option>
-                                        <option value="6">Day 7</option>
                                     </select>
                                     <button class="btn btn-secondary" onclick="exportCSV()">Export</button>
                                     <button class="btn btn-secondary" onclick="retryFailed()">Retry failed</button>
@@ -3365,7 +3364,7 @@
             const sentYday = ALL_ROWS.filter(r => r.status === 'sent' && r.sent_at && new Date(r.sent_at) >= yStart && new Date(r.sent_at) < today).length;
             const trend = sentYday === 0 ? (sentToday > 0 ? '+∞' : '—') : `${sentToday >= sentYday ? '+' : ''}${Math.round(((sentToday - sentYday) / sentYday) * 100)}%`;
             const tEl = document.getElementById('trend-today'); tEl.textContent = trend; tEl.classList.toggle('down', sentToday < sentYday);
-            drawSpark('spark-today', dailyCounts(7).map(d => d.v), C.primary);
+            drawSpark('spark-today', dailyCounts(5).map(d => d.v), C.primary);
             drawSpark('spark-week', dailyCounts(14).map(d => d.v), C.info);
             const nlc = document.getElementById('nav-log-count'); if (nlc) nlc.textContent = total;
         }
@@ -3562,7 +3561,14 @@
             return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
         }
         function todayMinusKey(days) {
-            const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - days);
+            const d = new Date(); d.setHours(0, 0, 0, 0);
+            let subtracted = 0;
+            while (subtracted < days) {
+                d.setDate(d.getDate() - 1);
+                if (d.getDay() !== 0 && d.getDay() !== 6) {
+                    subtracted++;
+                }
+            }
             return dateKey(d);
         }
         function dayLabel(r) {
@@ -3571,7 +3577,14 @@
             if (!r.sent_at) return '—';
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const d = new Date(r.sent_at); d.setHours(0, 0, 0, 0);
-            const diff = Math.round((today - d) / 864e5);
+            let diff = 0;
+            let temp = new Date(d);
+            while (temp < today) {
+                temp.setDate(temp.getDate() + 1);
+                if (temp.getDay() !== 0 && temp.getDay() !== 6) {
+                    diff++;
+                }
+            }
             return 'Day ' + (diff + 1);
         }
         function rowsForDayOffset(rows, offset) {
