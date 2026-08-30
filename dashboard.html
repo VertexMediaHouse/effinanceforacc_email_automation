@@ -3002,10 +3002,57 @@
         }
         async function fetchCsv(url) {
             const fetchUrl = url + (url.includes('?') ? '&' : '?') + '_cb=' + Date.now();
-            const res = await fetch(fetchUrl);
-            if (!res.ok) throw new Error(`HTTP ${res.status} — check that the sheet is published as CSV (File → Share → Publish to web → CSV)`);
-            const text = await res.text();
-            return parseCsv(text);
+            
+            // 1. Try Direct Fetch
+            try {
+                const res = await fetch(fetchUrl);
+                if (res.ok) {
+                    const text = await res.text();
+                    return parseCsv(text);
+                }
+            } catch (e) {
+                console.warn("Direct fetch failed (likely CORS). Trying proxies...", e);
+            }
+
+            // 2. Try Local Server Proxy if running from a server
+            if (window.location.protocol.startsWith('http')) {
+                try {
+                    const localProxyUrl = `/api/proxy?url=${encodeURIComponent(fetchUrl)}`;
+                    const res = await fetch(localProxyUrl);
+                    if (res.ok) {
+                        const text = await res.text();
+                        return parseCsv(text);
+                    }
+                } catch (e) {
+                    console.warn("Local server proxy failed. Trying public CORS proxies...", e);
+                }
+            }
+
+            // 3. Try CORSProxy.io (highly reliable in browser)
+            try {
+                const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(fetchUrl);
+                const res = await fetch(corsProxyUrl);
+                if (res.ok) {
+                    const text = await res.text();
+                    return parseCsv(text);
+                }
+            } catch (e) {
+                console.warn("CORSProxy.io failed. Trying AllOrigins...", e);
+            }
+
+            // 4. Try AllOrigins Proxy (fallback)
+            try {
+                const allOriginsUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(fetchUrl);
+                const res = await fetch(allOriginsUrl);
+                if (res.ok) {
+                    const text = await res.text();
+                    return parseCsv(text);
+                }
+            } catch (e) {
+                console.warn("AllOrigins proxy failed.", e);
+            }
+
+            throw new Error(`All connections failed. Please make sure the sheet is shared as 'Anyone with the link can view' or published as CSV.`);
         }
 
         function colVal(r, headers, key, campColMap) {
@@ -3054,7 +3101,7 @@
         }
 
         async function fetchConfig() {
-            const url = "https://docs.google.com/spreadsheets/d/1Xf5KEU_eeXmPwHysonm3PNInt9dLYIsLDJeXd4_DT5k/export?format=csv&gid=0";
+            const url = "https://docs.google.com/spreadsheets/d/1doOZBpSVp4UpziX7v1PpucQmmlxO8q-qTPuLoLg0To4/export?format=csv&gid=0";
             const parsed = await fetchCsv(url);
             const headers = parsed.headers;
             const rows = parsed.rows;
